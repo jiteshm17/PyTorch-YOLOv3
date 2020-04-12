@@ -5,11 +5,11 @@ build
 *.egg-info
 dist
 output
-data/
+data/custom_flir/images
+data/temp_custom
 logs/
 backup
-weights/*.weights
+weights/
 assets
-weights/darknet53.conv.74
 __pycache__
 checkpoints/
