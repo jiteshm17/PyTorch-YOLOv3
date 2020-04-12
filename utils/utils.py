@@ -233,23 +233,34 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.4):
 
     # From (center x, center y, width, height) to (x1, y1, x2, y2)
     prediction[..., :4] = xywh2xyxy(prediction[..., :4])
+    # print(prediction[0])
     output = [None for _ in range(len(prediction))]
     for image_i, image_pred in enumerate(prediction):
         # Filter out confidence scores below threshold
+        
         image_pred = image_pred[image_pred[:, 4] >= conf_thres]
+        # print(type(image_pred))
+        # print('After',image_pred.size(0))
+        
         # If none are remaining => process next image
         if not image_pred.size(0):
             continue
         # Object confidence times class confidence
+        # print(image_pred[:, 4],image_pred[:, 5])
         score = image_pred[:, 4] * image_pred[:, 5:].max(1)[0]
+        
         # Sort by it
         image_pred = image_pred[(-score).argsort()]
         class_confs, class_preds = image_pred[:, 5:].max(1, keepdim=True)
         detections = torch.cat((image_pred[:, :5], class_confs.float(), class_preds.float()), 1)
+        # print(detections[0])
+        # print(len(detections))
         # Perform non-maximum suppression
         keep_boxes = []
         while detections.size(0):
             large_overlap = bbox_iou(detections[0, :4].unsqueeze(0), detections[:, :4]) > nms_thres
+
+
             label_match = detections[0, -1] == detections[:, -1]
             # Indices of boxes with lower confidence scores, large IOUs and matching labels
             invalid = large_overlap & label_match
@@ -260,6 +271,7 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.4):
             detections = detections[~invalid]
         if keep_boxes:
             output[image_i] = torch.stack(keep_boxes)
+
 
     return output
 

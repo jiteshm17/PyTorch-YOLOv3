@@ -21,7 +21,7 @@ def pad_to_square(img, pad_value):
     pad = (0, 0, pad1, pad2) if h <= w else (pad1, pad2, 0, 0)
     # Add padding
     img = F.pad(img, pad, "constant", value=pad_value)
-
+    
     return img, pad
 
 
@@ -45,6 +45,7 @@ class ImageFolder(Dataset):
         img_path = self.files[index % len(self.files)]
         # Extract image as PyTorch tensor
         img = transforms.ToTensor()(Image.open(img_path))
+        # print(img.shape)
         # Pad to square resolution
         img, _ = pad_to_square(img, 0)
         # Resize
@@ -81,9 +82,12 @@ class ListDataset(Dataset):
         # ---------
 
         img_path = self.img_files[index % len(self.img_files)].rstrip()
+        # print(img_path)
 
         # Extract image as PyTorch tensor
         img = transforms.ToTensor()(Image.open(img_path).convert('RGB'))
+
+        # print(img.shape)
 
         # Handle images with less than three channels
         if len(img.shape) != 3:
@@ -103,8 +107,10 @@ class ListDataset(Dataset):
         label_path = self.label_files[index % len(self.img_files)].rstrip()
 
         targets = None
+        label_path = label_path.replace('.jpeg','.txt')
         if os.path.exists(label_path):
             boxes = torch.from_numpy(np.loadtxt(label_path).reshape(-1, 5))
+            # print(boxes)
             # Extract coordinates for unpadded + unscaled image
             x1 = w_factor * (boxes[:, 1] - boxes[:, 3] / 2)
             y1 = h_factor * (boxes[:, 2] - boxes[:, 4] / 2)
@@ -123,6 +129,9 @@ class ListDataset(Dataset):
 
             targets = torch.zeros((len(boxes), 6))
             targets[:, 1:] = boxes
+        
+        # print('###############Path does not exist for the lables')
+        # print(label_path)
 
         # Apply augmentations
         if self.augment:

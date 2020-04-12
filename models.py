@@ -168,14 +168,23 @@ class YOLOLayer(nn.Module):
         pred_boxes[..., 2] = torch.exp(w.data) * self.anchor_w
         pred_boxes[..., 3] = torch.exp(h.data) * self.anchor_h
 
+        # print(self.stride)
+        
+        # print('predicted boxes',pred_boxes.shape)
+        # print('predicted conf',pred_conf.shape)
+        # print('predicted classes',pred_cls.shape)
+        
         output = torch.cat(
             (
                 pred_boxes.view(num_samples, -1, 4) * self.stride,
                 pred_conf.view(num_samples, -1, 1),
                 pred_cls.view(num_samples, -1, self.num_classes),
+    
             ),
             -1,
         )
+
+        # print(output.shape)
 
         if targets is None:
             return output, 0
@@ -189,6 +198,9 @@ class YOLOLayer(nn.Module):
             )
 
             # Loss : Mask outputs to ignore non-existing objects (except with conf. loss)
+            obj_mask=obj_mask.bool() # convert int8 to bool
+            noobj_mask=noobj_mask.bool() #convert int8 to bool
+            
             loss_x = self.mse_loss(x[obj_mask], tx[obj_mask])
             loss_y = self.mse_loss(y[obj_mask], ty[obj_mask])
             loss_w = self.mse_loss(w[obj_mask], tw[obj_mask])
